@@ -64,6 +64,12 @@ def additional_to_str(val: Any) -> str:
         return val
     elif ty is Number:
         return str(val.value)
+    elif ty is String:
+        return "\"" + additional_to_str(val.value) + "\""
+    elif ty is Reference:
+        return "&" + additional_to_str(val.value)
+    elif ty is Dereference:
+        return "*" + additional_to_str(val.value)
     else:
         print("CCodeGenerator: additional_to_str(): String conversion from", type(val), "is not implemented!")
         return val
