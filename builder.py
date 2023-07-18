@@ -66,7 +66,7 @@ class String:
     value: str
 
     def __str__(self):
-        return "\"" + self.value + "\""
+        return "\"" + str(self.value) + "\""
 
 class Reference(Single):
     def __str__(self):
@@ -80,12 +80,55 @@ class Pointer(Single):
     def __str__(self):
         return str(self.value) + "*"
 
+@dataclass
 class TypeCast:
     type_: str
     value: Any
 
     def __str__(self):
-        return "(" + str(type_) + ")" + str(self.value)
+        return "(" + str(self.type_) + ")" + str(self.value)
+
+@dataclass
+class Subscript:
+    value: Any
+    index: Any
+
+    def __str__(self):
+        return str(self.value) + "[" + str(self.index) + "]"
+
+@dataclass
+class ParameterList:
+    arguments: list[CTypeVar]
+
+    def __str__(self):
+        temp = [str(i) for i in self.arguments]
+        strtemp = ""
+
+        for i in temp:
+            strtemp += i + ", "
+
+        return strtemp[:-2]
+
+@dataclass
+class ArgumentList:
+    arguments: list[Any]
+
+    def __str__(self):
+        temp = [str(i) for i in self.arguments]
+        strtemp = ""
+
+        for i in temp:
+            strtemp += i + ", "
+
+        return strtemp[:-2]
+
+@dataclass
+class FunctionCall:
+    name: str
+    arguments: ArgumentList
+
+    def __str__(self):
+        return str(self.name) + "(" + str(self.arguments) + ")"
 
 class CCode:
     def __init__(self):
@@ -94,13 +137,19 @@ class CCode:
         self.function_code = ""
         self.main_code = ""
 
+    def include_local(self, path: str):
+        self.preproc_code += "#include " + "\"" + path + "\"\n"
+
+    def include_global(self, path: str):
+        self.preproc_code += "#include " + "<" + path + ">\n"
+
     def eval_binop(self, tree: Add | Sub | Mul | Div):
         if type(tree) not in (Add, Sub, Mul, Div):
             return tree
         else:
             return str(tree)
 
-    def add_func(self, type_: str | None, name: str, args: list[CTypeVar], code_, static: bool = False):  # code_: CCode
+    def add_func(self, type_: str | None, name: str, args: ParameterList, code_, static: bool = False):  # code_: CCode
         type_ = type_ or "void"
 
         if static:
@@ -109,12 +158,9 @@ class CCode:
         code = type_ + " "
         code += name + "("
 
-        argsstr = ""
-
-        for i in args:
-            argsstr += i.type_ + " " + i.name + ", "
-
-        code += argsstr[:-2] + ") {\n"
+        code += str(args)
+        
+        code += ") {\n"
         
         code += code_.generate()
 
@@ -135,13 +181,13 @@ class CCode:
 
         code += ";"
 
-        self.definition_code += code
+        self.definition_code += code + "\n"
 
     def variable_set(self, name: str, value: str):
         self.main_code += name + " = " + str(value) + ";\n"
 
-    def add_function_call(self, name: str, argumnets: list[CTypeVar]):
-        ...
+    def call_func(self, fc: FunctionCall):
+        self.main_code += str(fc) + ";\n"
 
     def generate(self):
         return self.preproc_code + "\n" + self.definition_code + "\n" \
@@ -149,24 +195,22 @@ class CCode:
 
 if __name__ == "__main__":
     code = CCode()
+    main = CCode()
 
-    code.add_variable_definition(CTypeVar("int", "query_count"), Number(0))
-    code.variable_set("query_count", Number(4))
-    code.add_func("int", "hello", [], CCode())
+    code.include_global("stdio.h")
 
-    print(
-        code.variable_set(
-            "hello",
-            code.eval_binop(
-                Add(
-                    Number(8),
-                    Mul(
-                        Number(2),
-                        Number(4)
-                    )
-                )
-            )
+    main.add_variable_definition(
+        CTypeVar("char*", "pokemon"),
+        String("Pikachu")
+    )
+
+    main.call_func(
+        FunctionCall(
+            "printf",
+            ArgumentList([String(r"%s\n"), "pokemon"])
         )
     )
+    
+    code.add_func("int", "main", ParameterList([]), main)
 
     print(code.generate())
