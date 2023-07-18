@@ -207,7 +207,10 @@ if __name__ == "__main__":
     main.call_func(
         FunctionCall(
             "printf",
-            ArgumentList([String(r"%s\n"), "pokemon"])
+            ArgumentList([
+                String(r"%p\n"),
+                "pokemon"
+            ])
         )
     )
     
