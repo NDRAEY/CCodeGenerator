@@ -6,73 +6,86 @@ class CTypeVar:
     type_: str
     name: str
 
+    def __str__(self):
+        return self.type_ + " " + self.name
+
 @dataclass
 class LROperation:
     left: Any
     right: Any
 
-class Add(LROperation): pass
-class Sub(LROperation): pass
-class Mul(LROperation): pass
-class Div(LROperation): pass
-class And(LROperation): pass
-class ShLeft(LROperation): pass
-class ShRight(LROperation): pass
-class Or(LROperation): pass
+class Add(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " + " + str(self.right) + ")"
+
+class Sub(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " - " + str(self.right) + ")"
+
+class Mul(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " * " + str(self.right) + ")"
+
+class Div(LROperation): 
+    def __str__(self):
+        return "(" + str(self.left) + " / " + str(self.right) + ")"
+
+class And(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " & " + str(self.right) + ")"
+
+class ShLeft(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " << " + str(self.right) + ")"
+
+class ShRight(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " >> " + str(self.right) + ")"
+
+class Or(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " | " + str(self.right) + ")"
 
 @dataclass
 class Single:
     value: Any
 
-class Not(Single): pass
+class Not(Single):
+    def __str__(self):
+        return "(~" + str(self.right) + ")"
 
 @dataclass
 class Number:
     value: int
 
+    def __str__(self):
+        return str(self.value)
+
 @dataclass
 class String:
     value: str
 
-class Reference(Single): pass
-class Dereference(Single): pass
+    def __str__(self):
+        return "\"" + self.value + "\""
 
-def additional_to_str(val: Any) -> str:
-    ty = type(val)
+class Reference(Single):
+    def __str__(self):
+        return "&" + str(self.value)
 
-    if ty is CTypeVar:
-        return val.type_ + " " + val.name
-    elif ty is Add:
-        return "(" + additional_to_str(val.left) + " + " + additional_to_str(val.right) + ")"
-    elif ty is Sub:
-        return "(" + additional_to_str(val.left) + " - " + additional_to_str(val.right) + ")"
-    elif ty is Mul:
-        return "(" + additional_to_str(val.left) + " * " + additional_to_str(val.right) + ")"
-    elif ty is Div:
-        return "(" + additional_to_str(val.left) + " / " + additional_to_str(val.right) + ")"
-    elif ty is And:
-        return "(" + additional_to_str(val.left) + " & " + additional_to_str(val.right) + ")"
-    elif ty is ShLeft:
-        return "(" + additional_to_str(val.left) + " << " + additional_to_str(val.right) + ")"
-    elif ty is ShRight:
-        return "(" + additional_to_str(val.left) + " >> " + additional_to_str(val.right) + ")"
-    elif ty is Or:
-        return "(" + additional_to_str(val.left) + " | " + additional_to_str(val.right) + ")"
-    elif ty is Not:
-        return "(~" + additional_to_str(val.value) + ")"
-    elif ty is str:
-        return val
-    elif ty is Number:
-        return str(val.value)
-    elif ty is String:
-        return "\"" + additional_to_str(val.value) + "\""
-    elif ty is Reference:
-        return "&" + additional_to_str(val.value)
-    elif ty is Dereference:
-        return "*" + additional_to_str(val.value)
-    else:
-        print("CCodeGenerator: additional_to_str(): String conversion from", type(val), "is not implemented!")
-        return val
+class Dereference(Single):
+    def __str__(self):
+        return "*" + str(self.value)
+
+class Pointer(Single):
+    def __str__(self):
+        return str(self.value) + "*"
+
+class TypeCast:
+    type_: str
+    value: Any
+
+    def __str__(self):
+        return "(" + str(type_) + ")" + str(self.value)
 
 class CCode:
     def __init__(self):
@@ -85,7 +98,7 @@ class CCode:
         if type(tree) not in (Add, Sub, Mul, Div):
             return tree
         else:
-            return additional_to_str(tree)
+            return str(tree)
 
     def add_func(self, type_: str | None, name: str, args: list[CTypeVar], code_, static: bool = False):  # code_: CCode
         type_ = type_ or "void"
@@ -115,17 +128,17 @@ class CCode:
         if static:
             code += "static "
         
-        code += additional_to_str(definition)
+        code += str(definition)
 
         if value:
-            code += " = " + additional_to_str(value)
+            code += " = " + str(value)
 
         code += ";"
 
         self.definition_code += code
 
     def variable_set(self, name: str, value: str):
-        self.main_code += name + " = " + additional_to_str(value) + ";\n"
+        self.main_code += name + " = " + str(value) + ";\n"
 
     def add_function_call(self, name: str, argumnets: list[CTypeVar]):
         ...
