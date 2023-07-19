@@ -46,6 +46,30 @@ class Or(LROperation):
     def __str__(self):
         return "(" + str(self.left) + " | " + str(self.right) + ")"
 
+class Equal(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " == " + str(self.right) + ")"
+
+class NotEqual(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " != " + str(self.right) + ")"
+
+class Less(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " < " + str(self.right) + ")"
+
+class Greater(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " > " + str(self.right) + ")"
+
+class LessOrEqual(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " <= " + str(self.right) + ")"
+
+class GreaterOrEqual(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " >= " + str(self.right) + ")"
+
 @dataclass
 class Single:
     value: Any
