@@ -30,7 +30,7 @@ class Div(LROperation):
     def __str__(self):
         return "(" + str(self.left) + " / " + str(self.right) + ")"
 
-class And(LROperation):
+class BinAnd(LROperation):
     def __str__(self):
         return "(" + str(self.left) + " & " + str(self.right) + ")"
 
@@ -42,9 +42,17 @@ class ShRight(LROperation):
     def __str__(self):
         return "(" + str(self.left) + " >> " + str(self.right) + ")"
 
-class Or(LROperation):
+class BinOr(LROperation):
     def __str__(self):
         return "(" + str(self.left) + " | " + str(self.right) + ")"
+
+class And(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " && " + str(self.right) + ")"
+
+class Or(LROperation):
+    def __str__(self):
+        return "(" + str(self.left) + " || " + str(self.right) + ")"
 
 class Equal(LROperation):
     def __str__(self):
@@ -74,9 +82,13 @@ class GreaterOrEqual(LROperation):
 class Single:
     value: Any
 
-class Not(Single):
+class BinNot(Single):
     def __str__(self):
         return "(~" + str(self.right) + ")"
+
+class Not(Single):
+    def __str__(self):
+        return "(!" + str(self.right) + ")"
 
 @dataclass
 class Number:
@@ -154,6 +166,14 @@ class FunctionCall:
     def __str__(self):
         return str(self.name) + "(" + str(self.arguments) + ")"
 
+@dataclass
+class Assignation:
+    left: Any
+    right: Any
+
+    def __str__(self):
+        return str(self.left) + " = " + str(self.right)
+
 class CCode:
     def __init__(self):
         self.preproc_code = ""
@@ -173,7 +193,7 @@ class CCode:
         else:
             return str(tree)
 
-    def add_func(self, type_: str | None, name: str, args: ParameterList, code_, static: bool = False):  # code_: CCode
+    def add_func(self, type_: str | None, name: str, args: ParameterList, code_: self, static: bool = False):  # code_: CCode
         type_ = type_ or "void"
 
         if static:
@@ -206,6 +226,33 @@ class CCode:
         code += ";"
 
         self.definition_code += code + "\n"
+
+    def add_if(self, condition: Any, code_):
+        code = "if(" + str(condition) + ") {\n"
+
+        code += code.generate()
+
+        code += "\n}"
+
+        self.main_code += code + "\n"
+
+    def add_while(self, condition: Any, code_):
+        code = "while(" + str(condition) + ") {\n"
+
+        code += code.generate()
+
+        code += "\n}"
+
+        self.main_code += code + "\n"
+
+    def add_do_while(self, condition: Any, code_):
+        code = "do {\n"
+
+        code += code.generate()
+
+        code += "\n} while(" + str(condition) + ");"
+
+        self.main_code += code + "\n"
 
     def variable_set(self, name: str, value: str):
         self.main_code += name + " = " + str(value) + ";\n"
