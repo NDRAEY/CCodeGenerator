@@ -90,6 +90,14 @@ class Not(Single):
     def __str__(self):
         return "(!" + str(self.right) + ")"
 
+class Continue(Single):
+    def __str_(self):
+        return "continue"
+
+class Break(Single):
+    def __str_(self):
+        return "break"
+
 @dataclass
 class Number:
     value: int
@@ -193,7 +201,7 @@ class CCode:
         else:
             return str(tree)
 
-    def add_func(self, type_: str | None, name: str, args: ParameterList, code_: self, static: bool = False):  # code_: CCode
+    def add_func(self, type_: str | None, name: str, args: ParameterList, code_, static: bool = False):  # code_: CCode
         type_ = type_ or "void"
 
         if static:
@@ -251,6 +259,15 @@ class CCode:
         code += code.generate()
 
         code += "\n} while(" + str(condition) + ");"
+
+        self.main_code += code + "\n"
+
+    def add_for(self, declaration: Assignation, condition: Any, increment: Any,  code_):
+        code = "for(" + str(declaration) + "; " + str(condition) + "; " + str(increment) + ") {\n"
+
+        code += code.generate()
+
+        code += "\n}"
 
         self.main_code += code + "\n"
 
